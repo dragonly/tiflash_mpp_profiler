@@ -1,0 +1,60 @@
+{
+	"query_tso": 429032815573860353,
+	"task_id": 1,
+	"executor_structure": {
+		"id": 114,
+		"children": [{
+			"id": 112,
+			"children": [{
+				"id": 36,
+				"children": []
+			}, {
+				"id": 46,
+				"children": [{
+					"id": 47,
+					"children": [{
+						"id": 49,
+						"children": []
+					}]
+				}]
+			}]
+		}]
+	},
+	"executor_details": [{
+			"id": 114,
+			"type": "ExchangeSender",
+			"throuput": 123
+		},
+		{
+			"id": 112,
+			"type": "HashJoin",
+			"hash_table_bytes": 123
+		},
+		{
+			"id": 36,
+			"type": "ExchangeReceiver",
+			"throuput": 123
+		},
+		{
+			"id": 47,
+			"type": "HashAgg",
+			"hash_table_rows": 12
+		}
+	],
+	"host": "127.0.0.1:3930",
+	"upstream_task_ids": [2],
+	"task_init_timestamp": 1636630308,
+	"compile_start_timestamp": 1636630308,
+	"wait_index_start_timestamp": 1636630308,
+	"wait_index_end_timestamp": 1636630308,
+	"compile_end_timestamp": 1636630308,
+	"task_start_timestamp": 1636630308,
+	"task_end_timestamp": 1636630308,
+	"status": "FINISHED",
+	"error_message": "",
+	"local_input_throughput": 11249.924063012575,
+	"remote_input_throughput": 0,
+	"output_throughput": 6874.95359406324,
+	"cpu_usage": 1,
+	"memory_peak": 2
+}
