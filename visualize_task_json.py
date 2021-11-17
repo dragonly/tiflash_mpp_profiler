@@ -1,4 +1,5 @@
 import json
+
 import graphviz
 
 OUTPUT_DIR = 'output'
@@ -25,7 +26,8 @@ class Graph:
 class TaskGraph:
     def __init__(self, task_id, details):
         self.serial = 0
-        self._g = graphviz.Digraph(name="cluster_"+str(task_id), comment="task graph")
+        self._g = graphviz.Digraph(
+            name="cluster_"+str(task_id), comment="task graph")
         self.details = details
 
     def draw_executors(self, node):
@@ -34,7 +36,8 @@ class TaskGraph:
 
     def draw_executor_nodes(self, node):
         detail = self.details[node['id']]
-        label = '{}({})'.format(detail['type'], detail['id'])
+        label = '{}({})\n{}'.format(
+            detail['type'], detail['id'], self.gen_label_details(detail))
         self._g.node(node['id'], label)
         for child in node['children']:
             self.draw_executor_nodes(child)
@@ -43,6 +46,15 @@ class TaskGraph:
         for child in node['children']:
             self._g.edge(child['id'], node['id'])
             self.draw_executor_edges(child)
+
+    @staticmethod
+    def gen_label_details(detail):
+        labels = []
+        for k, v in detail.items():
+            if k != 'id' and k != 'type':
+                labels.append('{}: {}'.format(k, v))
+        return '\n'.join(labels)
+
 
 if __name__ == '__main__':
     data = read_json('tracing.json')
