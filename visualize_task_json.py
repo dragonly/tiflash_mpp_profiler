@@ -56,9 +56,7 @@ class TaskGraph:
         return '\n'.join(labels)
 
 
-if __name__ == '__main__':
-    data = read_json('tracing.json')
-    task = data[0]
+def gen_task_graph(task):
     task_id = task['task_id']
     root = task['executors']['structure']
     details = task['executors']['details']
@@ -66,6 +64,13 @@ if __name__ == '__main__':
     print(details)
     task_graph = TaskGraph(task_id, details)
     task_graph.draw_executors(root)
+    return task_graph
+
+
+if __name__ == '__main__':
+    data = read_json('tracing.json')
     graph = Graph()
-    graph.addTaskGraph(task_graph)
+    for task in data:
+        task_graph = gen_task_graph(task)
+        graph.addTaskGraph(task_graph)
     graph.render()
