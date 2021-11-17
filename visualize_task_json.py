@@ -1,4 +1,5 @@
 import json
+from typing import Dict
 
 import graphviz
 
@@ -13,57 +14,64 @@ def read_json(filename):
 
 class Graph:
     def __init__(self):
-        self._g = graphviz.Digraph(comment="main graph")
+        self._g = graphviz.Digraph(comment='main graph')
 
     def addTaskGraph(self, task_graph):
         self._g.subgraph(task_graph._g)
 
     def render(self):
-        path = '{}/query_task'.format(OUTPUT_DIR)
+        path = '{}/query_task.dot'.format(OUTPUT_DIR)
         self._g.render(path, format='png')
 
 
 class TaskGraph:
-    def __init__(self, task_id, details):
+    def __init__(self, task):
         self.serial = 0
         self._g = graphviz.Digraph(
-            name="cluster_"+str(task_id), comment="task graph")
-        self.details = details
+            name='cluster_'+str(task['task_id']), comment='task graph')
+        self._g.attr(label=_gen_label_task(task), labeljust='l')
+        self.details = task['executors']['details']
 
-    def draw_executors(self, node):
-        self.draw_executor_nodes(node)
-        self.draw_executor_edges(node)
+    def draw_executors(self):
+        root = task['executors']['structure']
+        self._draw_executor_nodes(root)
+        self._draw_executor_edges(root)
 
-    def draw_executor_nodes(self, node):
+    def _draw_executor_nodes(self, node):
         detail = self.details[node['id']]
-        label = '{}({})\n{}'.format(
-            detail['type'], detail['id'], self.gen_label_details(detail))
-        self._g.node(node['id'], label)
+        label = '{}({})\l{}'.format(
+            detail['type'], detail['id'], _gen_label_executor(detail))
+        self._g.node(node['id'], label, shape='box')
         for child in node['children']:
-            self.draw_executor_nodes(child)
+            self._draw_executor_nodes(child)
 
-    def draw_executor_edges(self, node):
+    def _draw_executor_edges(self, node):
         for child in node['children']:
             self._g.edge(child['id'], node['id'])
-            self.draw_executor_edges(child)
+            self._draw_executor_edges(child)
 
-    @staticmethod
-    def gen_label_details(detail):
-        labels = []
-        for k, v in detail.items():
-            if k != 'id' and k != 'type':
-                labels.append('{}: {}'.format(k, v))
-        return '\n'.join(labels)
+
+def _gen_label_executor(detail):
+    not_keys = {'id', 'type'}
+    return _gen_label(detail, not_keys)
+
+
+def _gen_label_task(task):
+    not_keys = not_keys = {'executors', 'upstream_task_ids'}
+    return _gen_label(task, not_keys)
+
+
+def _gen_label(data: Dict, not_keys, join_char='\l'):
+    labels = []
+    for k, v in data.items():
+        if k not in not_keys:
+            labels.append('{}: {}'.format(k, v))
+    return join_char.join(labels) + join_char
 
 
 def gen_task_graph(task):
-    task_id = task['task_id']
-    root = task['executors']['structure']
-    details = task['executors']['details']
-    print(root)
-    print(details)
-    task_graph = TaskGraph(task_id, details)
-    task_graph.draw_executors(root)
+    task_graph = TaskGraph(task)
+    task_graph.draw_executors()
     return task_graph
 
 
