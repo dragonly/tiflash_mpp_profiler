@@ -12,6 +12,24 @@ def read_json(filename):
     return data
 
 
+def _gen_label_executor(detail):
+    not_keys = {'type', }
+    return _gen_label(detail, not_keys)
+
+
+def _gen_label_task(task):
+    not_keys = not_keys = {'executors', 'upstream_task_ids'}
+    return _gen_label(task, not_keys)
+
+
+def _gen_label(data: Dict, not_keys, join_char='\l'):
+    labels = []
+    for k, v in data.items():
+        if k not in not_keys:
+            labels.append('{}: {}'.format(k, v))
+    return join_char.join(labels) + join_char
+
+
 class TaskGraph:
     def __init__(self, task):
         self._task = task
@@ -97,24 +115,6 @@ class Graph:
         path = '{}/query_task.dot'.format(OUTPUT_DIR)
         self._draw_task_references()
         self._g.render(path, format='png')
-
-
-def _gen_label_executor(detail):
-    not_keys = {'type', }
-    return _gen_label(detail, not_keys)
-
-
-def _gen_label_task(task):
-    not_keys = not_keys = {'executors', 'upstream_task_ids'}
-    return _gen_label(task, not_keys)
-
-
-def _gen_label(data: Dict, not_keys, join_char='\l'):
-    labels = []
-    for k, v in data.items():
-        if k not in not_keys:
-            labels.append('{}: {}'.format(k, v))
-    return join_char.join(labels) + join_char
 
 
 def gen_task_graph(task):
