@@ -13,12 +13,12 @@ def read_json(filename):
 
 
 def _gen_label_executor(detail):
-    not_keys = {'type', }
+    not_keys = {'type', 'id', 'children', 'sender_target_task_ids', 'receiver_source_task_ids'}
     return _gen_label(detail, not_keys)
 
 
 def _gen_label_task(task):
-    not_keys = not_keys = {'executors', 'upstream_task_ids'}
+    not_keys = not_keys = {'executors', 'sender_executor_id'}
     return _gen_label(task, not_keys)
 
 
@@ -30,15 +30,22 @@ def _gen_label(data: Dict, not_keys, join_char='\l'):
     return join_char.join(labels) + join_char
 
 
+def _parse_executors(executors: List):
+    ret = {}
+    for e in executors:
+        ret[e['id']] = e
+    return ret
+
+
 class TaskGraph:
     def __init__(self, task):
         self._task = task
         self._g = graphviz.Digraph(
             name='cluster_'+str(task['task_id']), comment='task graph')
-        self._g.attr(label=_gen_label_task(task), labeljust='l')
-        self._details: Dict[str, Any] = task['executors']['details']
+        self._g.attr(label=_gen_label_task(task), labeljust='l', labelloc='b')
+        self._executors: Dict[int, Any] = _parse_executors(task['executors'])
         self._task_id = task['task_id']
-        self._downstream_senders: Dict[str, List[str]] = {}
+        self._receiver_sources: Dict[int, List[int]] = {}
 
     @property
     def g(self):
@@ -57,34 +64,31 @@ class TaskGraph:
     @property
     def sender_executor(self):
         sender_executor_id = self._task['sender_executor_id']
-        return self._details[sender_executor_id]
+        return self._executors[sender_executor_id]
 
     @property
-    def downstream_senders(self):
-        return self._downstream_senders
+    def receiver_sources(self):
+        return self._receiver_sources
 
     def draw_executors(self):
-        root = self._task['executors']['structure']
-        self._draw_executor_nodes(root)
-        self._draw_executor_edges(root)
-        self._collect_downstreams()
+        self._draw_executor_nodes()
+        self._draw_executor_edges()
+        self._collect_receiver_sources()
 
-    def _collect_downstreams(self):
-        for executor_id, detail in self._details.items():
-            if 'downstream_task_ids' in detail:
-                self._downstream_senders[executor_id] = detail['downstream_task_ids']
+    def _collect_receiver_sources(self):
+        for eid, e in self._executors.items():
+            if 'receiver_source_task_ids' in e:
+                self._receiver_sources[eid] = e['receiver_source_task_ids']
 
-    def _draw_executor_nodes(self, node):
-        detail = self._details[node['id']]
-        label = '{}\l{}'.format(detail['type'], _gen_label_executor(detail))
-        self._g.node(self.get_node_id(node['id']), label, shape='box')
-        for child in node['children']:
-            self._draw_executor_nodes(child)
+    def _draw_executor_nodes(self):
+        for eid, e in self._executors.items():
+            label = '{}_{}\l{}'.format(e['type'], e['id'], _gen_label_executor(e))
+            self._g.node(self.get_node_id(eid), label, shape='box')
 
-    def _draw_executor_edges(self, node):
-        for child in node['children']:
-            self._g.edge(self.get_node_id(child['id']), self.get_node_id(node['id']))
-            self._draw_executor_edges(child)
+    def _draw_executor_edges(self):
+        for eid, e in self._executors.items():
+            for child_id in e['children']:
+                self._g.edge(self.get_node_id(child_id), self.get_node_id(eid))
 
     def get_node_id(self, node_id):
         return '{}-{}'.format(self._task_id, node_id)
@@ -103,7 +107,7 @@ class Graph:
     # draw executor references corssing task boundaries
     def _draw_task_references(self):
         for _, receiver_task_graph in self._task_graphs.items():
-            for receiver_executor_id, sender_task_ids in receiver_task_graph.downstream_senders.items():
+            for receiver_executor_id, sender_task_ids in receiver_task_graph.receiver_sources.items():
                 receiver_node_id = receiver_task_graph.get_node_id(receiver_executor_id)
                 for sender_task_id in sender_task_ids:
                     sender_task_graph = self._task_graphs[sender_task_id]
