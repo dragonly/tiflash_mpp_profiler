@@ -75,6 +75,7 @@ class TaskGraph:
 class Graph:
     def __init__(self):
         self._g = graphviz.Digraph(comment='main graph')
+        self._g.attr(rankdir='BT')
         self._task_graphs: Dict[str, TaskGraph] = {}
 
     def addTaskGraph(self, task_graph: TaskGraph):
