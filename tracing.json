@@ -1,46 +1,52 @@
 [
 	{
-		"query_tso": 429032815573860353,
+		"query_tso": 429211298412363778,
 		"task_id": 1,
 		"executors": {
 			"structure": {
-				"id": "114",
+				"id": "33",
 				"children": [
 					{
-						"id": "112",
+						"id": "21",
 						"children": [
 							{
-								"id": "36",
-								"children": []
-							},
-							{
-								"id": "47",
-								"children": []
+								"id": "30",
+								"children": [
+									{
+										"id": "29",
+										"children": []
+									}
+								]
 							}
 						]
 					}
 				]
 			},
 			"details": {
-				"114": {
-					"id": "114",
-					"type": "ExchangeSender",
-					"throuput": 123
+				"33": {
+					"id": "33",
+					"type": "ExchangeSender"
 				},
-				"112": {
-					"id": "112",
-					"type": "HashJoin",
-					"hash_table_bytes": 123
-				},
-				"36": {
-					"id": "36",
-					"type": "ExchangeReceiver",
-					"throuput": 123
-				},
-				"47": {
-					"id": "47",
+				"21": {
+					"id": "21",
 					"type": "HashAgg",
-					"hash_table_rows": 12
+					"rows_selectivity": 0.16666666666666666,
+					"blocks_selectivity": 1,
+					"bytes_selectivity": 0.5188679245283019,
+					"hash_table_rows": 5
+				},
+				"30": {
+					"id": "30",
+					"type": "Selection",
+					"rows_selectivity": 1,
+					"blocks_selectivity": 1,
+					"bytes_selectivity": 1.1111111111111112,
+					"avg_rows_per_block": 30,
+					"avg_bytes_per_block": 100
+				},
+				"29": {
+					"id": "29",
+					"type": "TableFullScan"
 				}
 			}
 		},
@@ -48,19 +54,276 @@
 		"upstream_task_ids": [
 			2
 		],
-		"task_init_timestamp": 1636630308,
-		"compile_start_timestamp": 1636630308,
-		"wait_index_start_timestamp": 1636630308,
-		"wait_index_end_timestamp": 1636630308,
-		"compile_end_timestamp": 1636630308,
-		"task_start_timestamp": 1636630308,
-		"task_end_timestamp": 1636630308,
+		"sender_executor_id": "33",
+		"task_init_timestamp": 1637311166538991,
+		"compile_start_timestamp": 1637311166603787,
+		"wait_index_start_timestamp": 1637311166612044,
+		"wait_index_end_timestamp": 1637311166620970,
+		"compile_end_timestamp": 1637311166634178,
+		"task_start_timestamp": 1637311166602535,
+		"task_end_timestamp": 1637311166651461,
 		"status": "FINISHED",
 		"error_message": "",
-		"local_input_throughput": 11249.924063012575,
+		"local_input_throughput": 7500.064375552556,
 		"remote_input_throughput": 0,
-		"output_throughput": 6874.95359406324,
-		"cpu_usage": 1,
-		"memory_peak": 2
+		"output_throughput": 3437.5294338457775,
+		"cpu_usage": 0,
+		"memory_peak": 0
+	},
+	{
+		"query_tso": 429211298412363778,
+		"task_id": 3,
+		"executors": {
+			"structure": {
+				"id": "48",
+				"children": [
+					{
+						"id": "38",
+						"children": [
+							{
+								"id": "45",
+								"children": [
+									{
+										"id": "44",
+										"children": []
+									}
+								]
+							}
+						]
+					}
+				]
+			},
+			"details": {
+				"48": {
+					"id": "48",
+					"type": "ExchangeSender"
+				},
+				"38": {
+					"id": "38",
+					"type": "HashAgg",
+					"rows_selectivity": 0.16666666666666666,
+					"blocks_selectivity": 1,
+					"bytes_selectivity": 0.2972027972027972,
+					"hash_table_rows": 5
+				},
+				"45": {
+					"id": "45",
+					"type": "Selection",
+					"rows_selectivity": 1,
+					"blocks_selectivity": 1,
+					"bytes_selectivity": 1.037037037037037,
+					"avg_rows_per_block": 30,
+					"avg_bytes_per_block": 280
+				},
+				"44": {
+					"id": "44",
+					"type": "TableFullScan"
+				}
+			}
+		},
+		"host": "127.0.0.1:3930",
+		"upstream_task_ids": [
+			4
+		],
+		"sender_executor_id": "48",
+		"task_init_timestamp": 1637311166539263,
+		"compile_start_timestamp": 1637311166604537,
+		"wait_index_start_timestamp": 1637311166615147,
+		"wait_index_end_timestamp": 1637311166620361,
+		"compile_end_timestamp": 1637311166637833,
+		"task_start_timestamp": 1637311166604233,
+		"task_end_timestamp": 1637311166653702,
+		"status": "FINISHED",
+		"error_message": "",
+		"local_input_throughput": 67500.57375487692,
+		"remote_input_throughput": 0,
+		"output_throughput": 10625.090313267663,
+		"cpu_usage": 0,
+		"memory_peak": 0
+	},
+	{
+		"query_tso": 429211298412363778,
+		"task_id": 2,
+		"executors": {
+			"structure": {
+				"id": "35",
+				"children": [
+					{
+						"id": "31",
+						"children": [
+							{
+								"id": "32",
+								"children": [
+									{
+										"id": "34",
+										"children": []
+									}
+								]
+							}
+						]
+					}
+				]
+			},
+			"details": {
+				"34": {
+					"id": "34",
+					"type": "ExchangeReceiver",
+					"downstream_task_ids": [
+						1
+					]
+				},
+				"35": {
+					"id": "35",
+					"type": "ExchangeSender"
+				},
+				"32": {
+					"id": "32",
+					"type": "HashAgg",
+					"rows_selectivity": 1,
+					"blocks_selectivity": 1,
+					"bytes_selectivity": 1.2727272727272727,
+					"hash_table_rows": 5
+				},
+				"31": {
+					"id": "31",
+					"type": "Projection"
+				}
+			}
+		},
+		"host": "127.0.0.1:3930",
+		"upstream_task_ids": [
+			4
+		],
+		"sender_executor_id": "35",
+		"task_init_timestamp": 1637311166538015,
+		"compile_start_timestamp": 1637311166604138,
+		"wait_index_start_timestamp": 1637311166604138,
+		"wait_index_end_timestamp": 1637311166604138,
+		"compile_end_timestamp": 1637311166638512,
+		"task_start_timestamp": 1637311166603609,
+		"task_end_timestamp": 1637311166662091,
+		"status": "FINISHED",
+		"error_message": "",
+		"local_input_throughput": 0,
+		"remote_input_throughput": 6875.0592973864395,
+		"output_throughput": 2750.0235127010337,
+		"cpu_usage": 0,
+		"memory_peak": 0
+	},
+	{
+		"query_tso": 429211298412363778,
+		"task_id": 4,
+		"executors": {
+			"structure": {
+				"id": "114",
+				"children": [
+					{
+						"id": "15",
+						"children": [
+							{
+								"id": "121",
+								"children": [
+									{
+										"id": "112",
+										"children": [
+											{
+												"id": "36",
+												"children": []
+											},
+											{
+												"id": "46",
+												"children": [
+													{
+														"id": "47",
+														"children": [
+															{
+																"id": "49",
+																"children": []
+															}
+														]
+													}
+												]
+											}
+										]
+									}
+								]
+							}
+						]
+					}
+				]
+			},
+			"details": {
+				"36": {
+					"id": "36",
+					"type": "ExchangeReceiver",
+					"downstream_task_ids": [
+						3
+					]
+				},
+				"49": {
+					"id": "49",
+					"type": "ExchangeReceiver",
+					"downstream_task_ids": [
+						2
+					]
+				},
+				"114": {
+					"id": "114",
+					"type": "ExchangeSender"
+				},
+				"15": {
+					"id": "15",
+					"type": "HashAgg",
+					"rows_selectivity": 0.2,
+					"blocks_selectivity": 1,
+					"bytes_selectivity": 0.2,
+					"hash_table_rows": 1
+				},
+				"47": {
+					"id": "47",
+					"type": "HashAgg",
+					"rows_selectivity": 1,
+					"blocks_selectivity": 1,
+					"bytes_selectivity": 1.5294117647058822,
+					"hash_table_rows": 5
+				},
+				"112": {
+					"id": "112",
+					"type": "HashJoin",
+					"probe_rows_selectivity": 1,
+					"probe_blocks_selectivity": 1,
+					"probe_bytes_selectivity": 3.3294117647058825,
+					"hash_table_bytes": 49152,
+					"process_time_for_build": 0
+				},
+				"121": {
+					"id": "121",
+					"type": "Projection"
+				},
+				"46": {
+					"id": "46",
+					"type": "Projection"
+				}
+			}
+		},
+		"host": "127.0.0.1:3930",
+		"upstream_task_ids": [
+			-1
+		],
+		"sender_executor_id": "114",
+		"task_init_timestamp": 1637311166537893,
+		"compile_start_timestamp": 1637311166603901,
+		"wait_index_start_timestamp": 1637311166603901,
+		"wait_index_end_timestamp": 1637311166603901,
+		"compile_end_timestamp": 1637311166670049,
+		"task_start_timestamp": 1637311166603497,
+		"task_end_timestamp": 1637311166687479,
+		"status": "FINISHED",
+		"error_message": "",
+		"local_input_throughput": 0,
+		"remote_input_throughput": 0,
+		"output_throughput": 8166.736764490562,
+		"cpu_usage": 0,
+		"memory_peak": 0
 	}
 ]
