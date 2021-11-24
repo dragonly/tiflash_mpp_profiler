@@ -17,8 +17,20 @@ def _gen_label_executor(detail):
     return _gen_label(detail, not_keys)
 
 
-def _gen_label_task(task):
-    not_keys = not_keys = {'executors', 'sender_executor_id'}
+def _gen_label_executor_task(task):
+    not_keys = {'executors', 'sender_executor_id'}
+    return _gen_label(task, not_keys)
+
+
+def _gen_label_input_stream(task):
+    not_keys = {'id', 'name', 'stat'}
+    outter = _gen_label(task, not_keys)
+    not_keys_inner = {'timeline'}
+    inner = _gen_label(task['stat'], not_keys_inner)
+    return outter + inner
+
+def _gen_label_input_stream_task(task):
+    not_keys = {'input_streams'}
     return _gen_label(task, not_keys)
 
 
@@ -30,20 +42,61 @@ def _gen_label(data: Dict, not_keys, join_char='\l'):
     return join_char.join(labels) + join_char
 
 
-def _parse_executors(executors: List):
+def _trans_list_to_id_map(l: List) -> Dict[int, Any]:
     ret = {}
-    for e in executors:
-        ret[e['id']] = e
+    for i in l:
+        ret[i['id']] = i
     return ret
+
+
+class InputStreamTaskGraph:
+    def __init__(self, task):
+        self._g = graphviz.Digraph(name='cluster_'+str(task['task_id']), comment='input stream graph')
+        self._g.attr(label=_gen_label_input_stream_task(task), labeljust='l', labelloc='b')
+        self._task_id = task['task_id']
+        self._input_streams = _trans_list_to_id_map(task['input_streams'])
+
+    @property
+    def g(self):
+        return self._g
+
+    def draw_input_streams(self):
+        self._draw_nodes()
+        self._draw_edges()
+
+    def _draw_nodes(self):
+        for id, s in self._input_streams.items():
+            label = '{}_{}\l{}'.format(s['name'], id, _gen_label_input_stream(s))
+            self._g.node(self.get_node_id(id), label, shape='box')
+
+    def _draw_edges(self):
+        for id, s in self._input_streams.items():
+            for child_id in s['children']:
+                self._g.edge(self.get_node_id(child_id), self.get_node_id(id))
+
+    def get_node_id(self, node_id):
+        return '{}-{}'.format(self._task_id, node_id)
+
+
+class InputStreamGraph:
+    def __init__(self):
+        self._g = graphviz.Digraph(comment='main graph')
+        self._g.attr(rankdir='BT')
+
+    def addTaskGraph(self, task_graph: InputStreamTaskGraph):
+        self._g.subgraph(task_graph.g)
+
+    def render(self):
+        path = '{}/input_stream_task.dot'.format(OUTPUT_DIR)
+        self._g.render(path, format='png')
 
 
 class TaskGraph:
     def __init__(self, task):
+        self._g = graphviz.Digraph(name='cluster_'+str(task['task_id']), comment='task graph')
+        self._g.attr(label=_gen_label_executor_task(task), labeljust='l', labelloc='b')
         self._task = task
-        self._g = graphviz.Digraph(
-            name='cluster_'+str(task['task_id']), comment='task graph')
-        self._g.attr(label=_gen_label_task(task), labeljust='l', labelloc='b')
-        self._executors: Dict[int, Any] = _parse_executors(task['executors'])
+        self._executors = _trans_list_to_id_map(task['executors'])
         self._task_id = task['task_id']
         self._receiver_sources: Dict[int, List[int]] = {}
 
@@ -121,16 +174,26 @@ class Graph:
         self._g.render(path, format='png')
 
 
-def gen_task_graph(task):
-    task_graph = TaskGraph(task)
-    task_graph.draw_executors()
-    return task_graph
-
-
-if __name__ == '__main__':
+def draw_tasks():
     data = read_json('tracing.json')
     graph = Graph()
     for task in data:
-        task_graph = gen_task_graph(task)
+        task_graph = TaskGraph(task)
+        task_graph.draw_executors()
         graph.addTaskGraph(task_graph)
     graph.render()
+
+
+def draw_input_streams():
+    data = read_json('/Users/dragonly/Downloads/test-input-streams.json')
+    graph = InputStreamGraph()
+    for task in data:
+        task_graph = InputStreamTaskGraph(task)
+        task_graph.draw_input_streams()
+        graph.addTaskGraph(task_graph)
+    graph.render()
+
+
+if __name__ == '__main__':
+    # draw_tasks()
+    draw_input_streams()
