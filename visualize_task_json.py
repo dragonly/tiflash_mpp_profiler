@@ -1,5 +1,6 @@
 import json
 from typing import Any, Dict, List
+from collections import defaultdict
 
 import graphviz
 
@@ -28,6 +29,7 @@ def _gen_label_input_stream(task):
     not_keys_inner = {'timeline'}
     inner = _gen_label(task['stat'], not_keys_inner)
     return outter + inner
+
 
 def _gen_label_input_stream_task(task):
     not_keys = {'input_streams'}
@@ -93,8 +95,8 @@ class InputStreamGraph:
 
 class TaskGraph:
     def __init__(self, task):
-        self._g = graphviz.Digraph(name='cluster_'+str(task['task_id']), comment='task graph')
-        self._g.attr(label=_gen_label_executor_task(task), labeljust='l', labelloc='b')
+        self._g = graphviz.Digraph(name='cluster_'+str(task['task_id']), comment='task')
+        self._g.attr(label=_gen_label_executor_task(task), labeljust='l', labelloc='b', style='solid')
         self._task = task
         self._executors = _trans_list_to_id_map(task['executors'])
         self._task_id = task['task_id']
@@ -110,9 +112,7 @@ class TaskGraph:
 
     @property
     def sender_executor_id(self):
-        if 'sender_executor_id' in self._task:
-            return self._task['sender_executor_id']
-        return None
+        return self._task['sender_executor_id']
 
     @property
     def sender_executor(self):
@@ -149,13 +149,23 @@ class TaskGraph:
 
 class Graph:
     def __init__(self):
-        self._g = graphviz.Digraph(comment='main graph')
-        self._g.attr(rankdir='BT')
-        self._task_graphs: Dict[str, TaskGraph] = {}
+        self._g = graphviz.Digraph(comment='main')
+        self._g.attr(rankdir='BT', splines='line')
+        self._task_graphs: Dict[int, TaskGraph] = {}
+        self._stages: Dict[int, List[TaskGraph]] = defaultdict(list)
 
     def addTaskGraph(self, task_graph: TaskGraph):
-        self._g.subgraph(task_graph.g)
+        # self._g.subgraph(task_graph.g)
+        self._stages[task_graph.sender_executor_id].append(task_graph)
         self._task_graphs[task_graph.id] = task_graph
+
+    def _draw_stages(self):
+        for sender_executor_id, task_graphs in self._stages.items():
+            stage_g = graphviz.Digraph(name='cluster_{}'.format(sender_executor_id), comment='stage')
+            stage_g.attr(label='stage', labeljust='c', labelloc='b', style='dashed')
+            for task_graph in task_graphs:
+                stage_g.subgraph(task_graph.g)
+            self._g.subgraph(stage_g)
 
     # draw executor references corssing task boundaries
     def _draw_task_references(self):
@@ -166,10 +176,11 @@ class Graph:
                     sender_task_graph = self._task_graphs[sender_task_id]
                     sender_executor_id = sender_task_graph.sender_executor_id
                     sender_node_id = sender_task_graph.get_node_id(sender_executor_id)
-                    self._g.edge(sender_node_id, receiver_node_id)
+                    self._g.edge(sender_node_id, receiver_node_id, color='#6cb359')
 
     def render(self):
         path = '{}/query_task.dot'.format(OUTPUT_DIR)
+        self._draw_stages()
         self._draw_task_references()
         self._g.render(path, format='png')
 
@@ -195,5 +206,5 @@ def draw_input_streams():
 
 
 if __name__ == '__main__':
-    # draw_tasks()
+    draw_tasks()
     draw_input_streams()
