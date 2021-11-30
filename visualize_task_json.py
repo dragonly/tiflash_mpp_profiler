@@ -176,7 +176,7 @@ class Graph:
                     sender_task_graph = self._task_graphs[sender_task_id]
                     sender_executor_id = sender_task_graph.sender_executor_id
                     sender_node_id = sender_task_graph.get_node_id(sender_executor_id)
-                    self._g.edge(sender_node_id, receiver_node_id, color='#6cb359')
+                    self._g.edge(sender_node_id, receiver_node_id, color='red')
 
     def render(self):
         path = '{}/query_task.dot'.format(OUTPUT_DIR)
@@ -205,6 +205,72 @@ def draw_input_streams():
     graph.render()
 
 
+def draw_input_streams_timeline():
+    data = read_json('/Users/dragonly/Downloads/timeline-xufei.json')
+    events = []
+    task_id_set = set()
+
+    # first round, collect metadata events (M)
+    # for the moment, we use ui.perfetto.dev to draw the timeline
+    # using task as process/stream as thread is good for drawing
+    for task in data:
+        task_id = task['query_tso']
+        if task_id not in task_id_set:
+            task_id_set.add(task_id)
+            events.append({
+                'pid': task_id,
+                'ph': 'M',
+                'name': 'process_name',
+                'args': {'name': 'task'}
+            })
+        input_streams = task['input_streams']
+        for stream in input_streams:
+            stream_id = stream['id']
+            events.append({
+                'pid': task_id,
+                'tid': stream_id,
+                'ph': 'M',
+                'name': 'thread_name',
+                'args': {'name': 'stream {}'.format(stream_id)}
+            })
+
+    # second round, collect counter events
+    for task in data:
+        task_id = task['query_tso']
+        input_streams = task['input_streams']
+        for stream in input_streams:
+            stream_id = stream['id']
+            name = '[{}] {}'.format(stream_id, stream['name'])
+            stats = stream['stat']
+            timeline_push = stats['timeline']['push']
+            timeline_pull = stats['timeline']['pull']
+            timeline_self = stats['timeline']['self']
+            events_push = _gen_counter_events(task_id, stream_id, name, timeline_push, timeline_pull, timeline_self)
+            events.extend(events_push)
+
+    with open('output/timeline.json', 'w') as fd:
+        json.dump(events, fd)
+
+# currently we assume that each
+
+
+def _gen_counter_events(pid, tid, name, push, pull, self):
+    ret = []
+    ts = 1
+    for c1, c2, c3 in zip(push, pull, self):
+        ret.append({
+            'pid': pid,
+            'tid': tid,
+            'ph': 'C',
+            'name': name,
+            'ts': ts,
+            'args': {'push': c1, 'pull': c2, 'self': c3}
+        })
+        ts += 100*1000  # microsecond
+    return ret
+
+
 if __name__ == '__main__':
     draw_tasks()
     draw_input_streams()
+    draw_input_streams_timeline()
