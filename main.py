@@ -66,13 +66,19 @@ def default(parser, args):
     draw_tasks(task_dag)
 
 
-if __name__ == '__main__':
+def cli():
     parser = argparse.ArgumentParser()
     parser.set_defaults(func=default)
+
     subparsers = parser.add_subparsers()
+
     parser_collect = subparsers.add_parser('collect')
     parser_collect.add_argument('--cluster', type=str)
     parser_collect.set_defaults(func=collect)
 
     args = parser.parse_args(sys.argv[1:])
     args.func(parser, args)
+
+
+if __name__ == '__main__':
+    cli()
