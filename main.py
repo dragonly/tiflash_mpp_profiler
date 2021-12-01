@@ -1,9 +1,12 @@
 import argparse
+import json
 import sys
+from os.path import expanduser
+from visualize_task_json import draw_tasks
+
 import paramiko
 import yaml
 
-from os.path import expanduser
 HOME_DIR = expanduser("~")
 
 
@@ -12,9 +15,9 @@ def get_tiup_config(cluster_name):
     ssh_key_file = '{}/ssh/id_rsa'.format(cluster_dir)
     print('cluster_dir = {}'.format(cluster_dir))
     meta_filename = '{}/meta.yaml'.format(cluster_dir)
-    file = open(meta_filename, 'r')
-    meta = yaml.safe_load(file.read())
-    file.close()
+    fd = open(meta_filename, 'r')
+    meta = yaml.safe_load(fd.read())
+    fd.close()
     username = meta['user']
     tiflash_servers = meta['topology']['tiflash_servers']
     return username, ssh_key_file, tiflash_servers
@@ -29,17 +32,38 @@ def copy_log_file(host, port, username, ssh_key_file, log_dir):
     local_log_filename = '{}.tiflash.log'.format(host)
     print('scp {}@{}:{}/{} {}'.format(username, host, port, remote_log_filename, local_log_filename))
     sftp.get(remote_log_filename, local_log_filename)
+    return local_log_filename
+
+
+def parse_log(filename):
+    with open(filename, 'r') as fd:
+        ret = []
+        for line in fd:
+            if 'mpp_task_tracing' not in line:
+                continue
+            l = line.find('{')
+            r = line.rfind('}')
+            if l == -1 or r == -1:
+                print('cannot parse json in "{}"'.format(line))
+                exit(-1)
+            json_str = line[l:r+1].replace('\\', '')
+            data = json.loads(json_str)
+            ret.append(data)
+    return ret
 
 
 # collect will try to use tiup configuration in this machine for the cluster specified in args
 def collect(parser, args):
     username, ssh_key_file, tiflash_servers = get_tiup_config(args.cluster)
     for server in tiflash_servers:
-        copy_log_file(server['host'], server['ssh_port'], username, ssh_key_file, server['log_dir'])
+        log_filename = copy_log_file(server['host'], server['ssh_port'], username, ssh_key_file, server['log_dir'])
+        parse_log(log_filename)
 
 
 def default(parser, args):
-    parser.print_help()
+    # parser.print_help()
+    task_dag = parse_log('/Users/dragonly/Downloads/origin_log.txt')
+    draw_tasks(task_dag)
 
 
 if __name__ == '__main__':
