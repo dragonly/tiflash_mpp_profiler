@@ -3,6 +3,7 @@ import json
 import sys
 from os.path import expanduser
 from visualize_task_json import draw_tasks
+import utils
 
 import paramiko
 import yaml
@@ -60,10 +61,13 @@ def collect(parser, args):
         parse_log(log_filename)
 
 
-def default(parser, args):
-    # parser.print_help()
-    task_dag = parse_log('/Users/dragonly/Downloads/origin_log.txt')
+def draw(parser, args):
+    task_dag = utils.read_json(args.json_file)
     draw_tasks(task_dag)
+
+
+def default(parser, args):
+    parser.print_help()
 
 
 def cli():
@@ -75,6 +79,10 @@ def cli():
     parser_collect = subparsers.add_parser('collect')
     parser_collect.add_argument('--cluster', type=str)
     parser_collect.set_defaults(func=collect)
+
+    parser_draw = subparsers.add_parser('draw')
+    parser_draw.add_argument('--json_file', type=str)
+    parser_draw.set_defaults(func=draw)
 
     args = parser.parse_args(sys.argv[1:])
     args.func(parser, args)

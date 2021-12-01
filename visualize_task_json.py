@@ -1,16 +1,12 @@
 import json
-from typing import Any, Dict, List
 from collections import defaultdict
+from typing import Any, Dict, List
 
 import graphviz
 
+from utils import read_json
+
 OUTPUT_DIR = 'output'
-
-
-def read_json(filename):
-    with open(filename, 'r') as fd:
-        data = json.load(fd)
-    return data
 
 
 def _gen_label_executor(detail):
