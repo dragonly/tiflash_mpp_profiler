@@ -14,7 +14,7 @@ def read_json(filename):
 
 
 def _gen_label_executor(detail):
-    not_keys = {'type', 'id', 'children', 'sender_target_task_ids', 'receiver_source_task_ids'}
+    not_keys = {'type', 'id', 'children', 'sender_target_task_ids', 'receiver_source_task_ids', 'connection_details'}
     return _gen_label(detail, not_keys)
 
 
@@ -186,7 +186,7 @@ class Graph:
 
 
 def draw_tasks():
-    data = read_json('tracing.json')
+    data = read_json('/Users/dragonly/Downloads/multi_machine_mpp_task_tracing.json')
     graph = Graph()
     for task in data:
         task_graph = TaskGraph(task)
@@ -206,7 +206,7 @@ def draw_input_streams():
 
 
 def draw_input_streams_timeline():
-    data = read_json('/Users/dragonly/Downloads/timeline-xufei.json')
+    data = read_json('/Users/dragonly/Downloads/test-input-streams(1).json')
     events = []
     task_id_set = set()
 
@@ -221,7 +221,7 @@ def draw_input_streams_timeline():
                 'pid': task_id,
                 'ph': 'M',
                 'name': 'process_name',
-                'args': {'name': 'task'}
+                'args': {'name': 'task {}'.format(task_id)}
             })
         input_streams = task['input_streams']
         for stream in input_streams:
@@ -240,7 +240,7 @@ def draw_input_streams_timeline():
         input_streams = task['input_streams']
         for stream in input_streams:
             stream_id = stream['id']
-            name = '[{}] {}'.format(stream_id, stream['name'])
+            name = '[{}] {}({})'.format(stream_id, stream['name'], stream['executor'])
             stats = stream['stat']
             timeline_push = stats['timeline']['push']
             timeline_pull = stats['timeline']['pull']
@@ -272,5 +272,5 @@ def _gen_counter_events(pid, tid, name, push, pull, self):
 
 if __name__ == '__main__':
     draw_tasks()
-    draw_input_streams()
-    draw_input_streams_timeline()
+    # draw_input_streams()
+    # draw_input_streams_timeline()
