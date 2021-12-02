@@ -61,9 +61,6 @@ def parse_log_to_file(log_dir, json_dir):
 
 # collect will try to use tiup configuration in this machine for the cluster specified in args
 def collect(parser, args):
-    if args.cluster is None:
-        print("please provide --cluster argument")
-        exit(-1)
     utils.ensure_dir_exist(FLASHPROF_LOG_DIR)
     utils.ensure_dir_exist(FLASHPROF_JSON_DIR)
     username, ssh_key_file, tiflash_servers = get_tiup_config(args.cluster)
@@ -73,16 +70,10 @@ def collect(parser, args):
 
 
 def draw(parser, args):
-    if args.json_file is None:
-        print("please provide --json_file argument")
-        exit(-1)
-    supported_types = ['task_dag', 'input_stream_dag']
-    if args.type not in supported_types:
-        print("please provide --type argument, supported are {}".format(supported_types))
-        exit(-1)
     task_dag = utils.read_json(args.json_file)
+    filename = os.path.join(args.out_dir, (os.path.basename(args.json_file)))
     if args.type == 'task_dag':
-        draw_tasks_dag(task_dag)
+        draw_tasks_dag(task_dag, filename, args.format)
 
 
 def default(parser, args):
@@ -96,12 +87,14 @@ def cli():
     subparsers = parser.add_subparsers()
 
     parser_collect = subparsers.add_parser('collect')
-    parser_collect.add_argument('--cluster', type=str)
+    parser_collect.add_argument('--cluster', type=str, required=True)
     parser_collect.set_defaults(func=collect)
 
     parser_draw = subparsers.add_parser('draw')
-    parser_draw.add_argument('--json_file', type=str)
-    parser_draw.add_argument('--type', type=str)
+    parser_draw.add_argument('--json_file', type=str, required=True)
+    parser_draw.add_argument('--type', type=str, required=True, choices=['task_dag', 'input_stream_dag'])
+    parser_draw.add_argument('--out_dir', type=str, required=True)
+    parser_draw.add_argument('--format', type=str, default='png')
     parser_draw.set_defaults(func=draw)
 
     args = parser.parse_args(sys.argv[1:])

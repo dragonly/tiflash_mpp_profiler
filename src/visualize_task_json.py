@@ -174,20 +174,21 @@ class Graph:
                     sender_node_id = sender_task_graph.get_node_id(sender_executor_id)
                     self._g.edge(sender_node_id, receiver_node_id, color='red')
 
-    def render(self):
-        path = '{}/query_task.dot'.format(OUTPUT_DIR)
+    def render(self, filename, format):
         self._draw_stages()
         self._draw_task_references()
-        self._g.render(path, format='png')
+        self._g.render(filename, format=format)
 
 
-def draw_tasks_dag(data):
+def draw_tasks_dag(data, filename, format='png'):
+    if filename is None:
+        filename = '{}/query_task.dot'.format(OUTPUT_DIR)
     graph = Graph()
     for task in data:
         task_graph = TaskGraph(task)
         task_graph.draw_executors()
         graph.addTaskGraph(task_graph)
-    graph.render()
+    graph.render(filename, format)
 
 
 def draw_input_streams():

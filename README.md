@@ -1,8 +1,10 @@
 # Usage
 
 ```bash
-# collect tiflash logs from tiup cluster to current directory
+# collect tiflash logs from tiup cluster to current directory, which will also be parsed to json
 flashprof collect --cluster $CLUSTER_NAME
+# draw dag using parsed json file, support task/input_stream DAG
+flashprof draw --json_file $JSON_FILE --out_dir $OUT_DIR --type $DAG_TYPE
 ```
 
 # Packaging
