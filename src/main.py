@@ -3,7 +3,7 @@ import json
 import os
 import sys
 from os.path import expanduser
-from visualize_task_json import draw_tasks
+from visualize_task_json import draw_tasks_dag
 import utils
 
 import paramiko
@@ -54,13 +54,16 @@ def parse_log_to_file(log_dir, json_dir):
                 json_str = line[l:r+1].replace('\\', '')
                 data = json.loads(json_str)
                 ret.append(data)
-        output_filename = os.path.join(json_dir, log_filename + '.json')
+        output_filename = os.path.join(json_dir, log_filename + '.task_dag.json')
         with open(output_filename, 'wt') as fd:
             json.dump(ret, fd)
 
 
 # collect will try to use tiup configuration in this machine for the cluster specified in args
 def collect(parser, args):
+    if args.cluster is None:
+        print("please provide --cluster argument")
+        exit(-1)
     utils.ensure_dir_exist(FLASHPROF_LOG_DIR)
     utils.ensure_dir_exist(FLASHPROF_JSON_DIR)
     username, ssh_key_file, tiflash_servers = get_tiup_config(args.cluster)
@@ -70,8 +73,16 @@ def collect(parser, args):
 
 
 def draw(parser, args):
+    if args.json_file is None:
+        print("please provide --json_file argument")
+        exit(-1)
+    supported_types = ['task_dag', 'input_stream_dag']
+    if args.type not in supported_types:
+        print("please provide --type argument, supported are {}".format(supported_types))
+        exit(-1)
     task_dag = utils.read_json(args.json_file)
-    draw_tasks(task_dag)
+    if args.type == 'task_dag':
+        draw_tasks_dag(task_dag)
 
 
 def default(parser, args):
@@ -90,6 +101,7 @@ def cli():
 
     parser_draw = subparsers.add_parser('draw')
     parser_draw.add_argument('--json_file', type=str)
+    parser_draw.add_argument('--type', type=str)
     parser_draw.set_defaults(func=draw)
 
     args = parser.parse_args(sys.argv[1:])

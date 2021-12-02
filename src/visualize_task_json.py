@@ -181,7 +181,7 @@ class Graph:
         self._g.render(path, format='png')
 
 
-def draw_tasks(data):
+def draw_tasks_dag(data):
     graph = Graph()
     for task in data:
         task_graph = TaskGraph(task)
@@ -266,6 +266,6 @@ def _gen_counter_events(pid, tid, name, push, pull, self):
 
 
 if __name__ == '__main__':
-    draw_tasks(read_json('/Users/dragonly/Downloads/multi_machine_mpp_task_tracing.json'))
+    draw_tasks_dag(read_json('/Users/dragonly/Downloads/multi_machine_mpp_task_tracing.json'))
     # draw_input_streams()
     # draw_input_streams_timeline()
