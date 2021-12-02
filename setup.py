@@ -6,6 +6,7 @@ def read_file(filename):
         return fd.read()
 
 
+# see examples in https://docs.python.org/3/distutils/examples.html
 setup(
     name='flashprof',
     version='0.0.1',
@@ -14,7 +15,8 @@ setup(
     author_email='liyilongko@gmail.com',
     url='https://github.com/dragonly/tiflash_mpp_profiler',
     license=read_file('LICENSE'),
-    py_modules=['main'],
+    package_dir={'': 'src'},
+    packages=[''],
     entry_points={
         'console_scripts': [
             'flashprof = main:cli'
