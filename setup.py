@@ -9,7 +9,7 @@ def read_file(filename):
 # see examples in https://docs.python.org/3/distutils/examples.html
 setup(
     name='flashprof',
-    version='0.0.1',
+    version='0.0.2',
     description='a tool that collects and visualizes TiFlash runtime infomation',
     author='dragonly',
     author_email='liyilongko@gmail.com',

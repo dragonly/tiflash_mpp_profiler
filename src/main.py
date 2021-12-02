@@ -1,5 +1,6 @@
 import argparse
 import json
+import os
 import sys
 from os.path import expanduser
 from visualize_task_json import draw_tasks
@@ -9,6 +10,9 @@ import paramiko
 import yaml
 
 HOME_DIR = expanduser("~")
+FLASHPROF_DIR = os.path.join(os.path.realpath(os.curdir()), 'flashprof')
+FLASHPROF_LOG_DIR = os.path.join(FLASHPROF_DIR, 'log')
+FLASHPROF_JSON_DIR = os.path.join(FLASHPROF_DIR, 'json')
 
 
 def get_tiup_config(cluster_name):
@@ -29,36 +33,40 @@ def copy_log_file(host, port, username, ssh_key_file, log_dir):
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     ssh.connect(host, port, username, key_filename=ssh_key_file)
     sftp = ssh.open_sftp()
-    remote_log_filename = '{}/tiflash.log'.format(log_dir)
-    local_log_filename = '{}.tiflash.log'.format(host)
+    remote_log_filename = os.path.join(log_dir, 'tiflash.log')
+    local_log_filename = os.path.join(FLASHPROF_LOG_DIR, '{}.tiflash.log'.format(host))
     print('scp {}@{}:{}/{} {}'.format(username, host, port, remote_log_filename, local_log_filename))
     sftp.get(remote_log_filename, local_log_filename)
-    return local_log_filename
 
 
-def parse_log(filename):
-    with open(filename, 'r') as fd:
+def parse_log_to_file(log_dir, json_dir):
+    for filename in os.listdir(log_dir):
         ret = []
-        for line in fd:
-            if 'mpp_task_tracing' not in line:
-                continue
-            l = line.find('{')
-            r = line.rfind('}')
-            if l == -1 or r == -1:
-                print('cannot parse json in "{}"'.format(line))
-                exit(-1)
-            json_str = line[l:r+1].replace('\\', '')
-            data = json.loads(json_str)
-            ret.append(data)
-    return ret
+        with open(filename, 'r') as fd:
+            for line in fd:
+                if 'mpp_task_tracing' not in line:
+                    continue
+                l = line.find('{')
+                r = line.rfind('}')
+                if l == -1 or r == -1:
+                    print('cannot parse json in "{}"'.format(line))
+                    exit(-1)
+                json_str = line[l:r+1].replace('\\', '')
+                data = json.loads(json_str)
+                ret.append(data)
+        output_filename = os.path.join(json_dir, filename + '.json')
+        with open(output_filename, 'wt') as fd:
+            json.dump(ret, fd)
 
 
 # collect will try to use tiup configuration in this machine for the cluster specified in args
 def collect(parser, args):
+    utils.ensure_dir_exist(FLASHPROF_LOG_DIR)
+    utils.ensure_dir_exist(FLASHPROF_JSON_DIR)
     username, ssh_key_file, tiflash_servers = get_tiup_config(args.cluster)
     for server in tiflash_servers:
-        log_filename = copy_log_file(server['host'], server['ssh_port'], username, ssh_key_file, server['log_dir'])
-        parse_log(log_filename)
+        copy_log_file(server['host'], server['ssh_port'], username, ssh_key_file, server['log_dir'])
+        parse_log_to_file(FLASHPROF_LOG_DIR, FLASHPROF_JSON_DIR)
 
 
 def draw(parser, args):
