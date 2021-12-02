@@ -10,7 +10,7 @@ import paramiko
 import yaml
 
 HOME_DIR = expanduser("~")
-FLASHPROF_DIR = os.path.join(os.path.realpath(os.curdir()), 'flashprof')
+FLASHPROF_DIR = os.path.join(os.path.realpath('.'), 'flashprof')
 FLASHPROF_LOG_DIR = os.path.join(FLASHPROF_DIR, 'log')
 FLASHPROF_JSON_DIR = os.path.join(FLASHPROF_DIR, 'json')
 
