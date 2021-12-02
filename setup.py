@@ -1,8 +1,10 @@
 from setuptools import setup
 
+
 def read_file(filename):
     with open(filename, 'r') as fd:
         return fd.read()
+
 
 setup(
     name='flashprof',
@@ -17,5 +19,10 @@ setup(
         'console_scripts': [
             'flashprof = main:cli'
         ]
-    }
+    },
+    install_requires=[
+        'graphviz',
+        'paramiko',
+        'pyyaml'
+    ]
 )
