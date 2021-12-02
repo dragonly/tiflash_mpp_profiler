@@ -1,6 +1,8 @@
 # Usage
 
 ```bash
+# install from pypi
+pip3 install flashprof
 # collect tiflash logs from tiup cluster to current directory, which will also be parsed to json
 flashprof collect --cluster $CLUSTER_NAME
 # draw dag using parsed json file, support task/input_stream DAG
