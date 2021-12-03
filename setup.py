@@ -11,6 +11,7 @@ setup(
     name='flashprof',
     version='0.0.3',
     description='a tool that collects and visualizes TiFlash runtime infomation',
+    long_description_content_type='text/markdown',
     author='dragonly',
     author_email='liyilongko@gmail.com',
     url='https://github.com/dragonly/tiflash_mpp_profiler',
