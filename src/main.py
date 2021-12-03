@@ -1,13 +1,15 @@
 import argparse
 import json
 import os
+import re
 import sys
 from os.path import expanduser
-from visualize_task_json import draw_tasks_dag
-import utils
 
 import paramiko
 import yaml
+
+import utils
+from visualize_task_json import draw_tasks_dag
 
 HOME_DIR = expanduser("~")
 FLASHPROF_DIR = os.path.join(os.path.realpath('.'), 'flashprof')
@@ -45,14 +47,10 @@ def parse_log_to_file(log_dir, json_dir):
         print('parsing {}'.format(log_filename))
         with open(os.path.join(log_dir, log_filename), 'r') as fd:
             for line in fd:
-                if 'mpp_task_tracing' not in line:
+                match = re.search(r'\["MPPTask:<query:\d+,task:\d+> mpp_task_tracing (\{.+\})', line)
+                if match is None:
                     continue
-                l = line.find('{')
-                r = line.rfind('}')
-                if l == -1 or r == -1:
-                    print('cannot find brackets in "{}"'.format(line))
-                    continue
-                json_str = line[l:r+1].replace('\\', '')
+                json_str = match.group(1).replace('\\', '')
                 try:
                     data = json.loads(json_str)
                 except Exception as e:
