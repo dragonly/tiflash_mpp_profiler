@@ -73,6 +73,10 @@ def collect(parser, args):
     parse_log_to_file(FLASHPROF_LOG_DIR, FLASHPROF_JSON_DIR)
 
 
+def parse(parser, args):
+    parse_log_to_file(FLASHPROF_LOG_DIR, FLASHPROF_JSON_DIR)
+
+
 def draw(parser, args):
     task_dag = utils.read_json(args.json_file)
     filename = os.path.join(args.out_dir, (os.path.basename(args.json_file)))
@@ -93,6 +97,9 @@ def cli():
     parser_collect = subparsers.add_parser('collect')
     parser_collect.add_argument('--cluster', type=str, required=True)
     parser_collect.set_defaults(func=collect)
+
+    parser_parse = subparsers.add_parser('parse')
+    parser_parse.set_defaults(func=parse)
 
     parser_draw = subparsers.add_parser('draw')
     parser_draw.add_argument('--json_file', type=str, required=True)
