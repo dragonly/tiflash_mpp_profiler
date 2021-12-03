@@ -9,6 +9,17 @@ flashprof collect --cluster $CLUSTER_NAME
 flashprof draw --json_file $JSON_FILE --out_dir $OUT_DIR --type $DAG_TYPE
 ```
 
+# Development
+
+```bash
+# install a local dev version of python package, then we can call flashprof
+# rerun this when code is changed
+# it internally creates a symbolic link to the current source code
+pip3 install -e .
+# remove if you want
+pip3 uninstall flashprof
+```
+
 # Packaging
 
 ## TL;DR

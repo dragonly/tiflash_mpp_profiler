@@ -49,10 +49,14 @@ def parse_log_to_file(log_dir, json_dir):
                 l = line.find('{')
                 r = line.rfind('}')
                 if l == -1 or r == -1:
-                    print('cannot parse json in "{}"'.format(line))
-                    exit(-1)
+                    print('cannot find brackets in "{}"'.format(line))
+                    continue
                 json_str = line[l:r+1].replace('\\', '')
-                data = json.loads(json_str)
+                try:
+                    data = json.loads(json_str)
+                except Exception as e:
+                    print(e)
+                    continue
                 ret.append(data)
         output_filename = os.path.join(json_dir, log_filename + '.task_dag.json')
         with open(output_filename, 'wt') as fd:
@@ -66,7 +70,7 @@ def collect(parser, args):
     username, ssh_key_file, tiflash_servers = get_tiup_config(args.cluster)
     for server in tiflash_servers:
         copy_log_file(server['host'], server['ssh_port'], username, ssh_key_file, server['log_dir'])
-        parse_log_to_file(FLASHPROF_LOG_DIR, FLASHPROF_JSON_DIR)
+    parse_log_to_file(FLASHPROF_LOG_DIR, FLASHPROF_JSON_DIR)
 
 
 def draw(parser, args):
