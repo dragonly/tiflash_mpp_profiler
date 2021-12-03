@@ -42,6 +42,7 @@ def copy_log_file(host, port, username, ssh_key_file, log_dir):
 def parse_log_to_file(log_dir, json_dir):
     for log_filename in os.listdir(log_dir):
         ret = []
+        print('parsing {}'.format(log_filename))
         with open(os.path.join(log_dir, log_filename), 'r') as fd:
             for line in fd:
                 if 'mpp_task_tracing' not in line:
@@ -59,6 +60,7 @@ def parse_log_to_file(log_dir, json_dir):
                     continue
                 ret.append(data)
         output_filename = os.path.join(json_dir, log_filename + '.task_dag.json')
+        print('write to {}'.format(output_filename))
         with open(output_filename, 'wt') as fd:
             json.dump(ret, fd)
 
