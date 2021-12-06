@@ -9,6 +9,25 @@ flashprof collect --cluster $CLUSTER_NAME
 flashprof draw --json_file $JSON_FILE --out_dir $OUT_DIR --type $DAG_TYPE
 ```
 
+## data layout
+
+The collected/generated artifacts have the following layout
+
+```
+flashprof
+└── cluster
+    ├── cluster1_name
+    │   ├── log (collected from tiflash log dir)
+    │   │   ├── ip1.tiflash.log
+    │   │   └── ip2.tiflash.log
+    │   └── task_dag (parsed and combined task dag)
+    │       ├── ip1.tiflash.log.task_dag.json
+    │       ├── ip2.tiflash.log.task_dag.json
+    │       └── cluster.task_dag.json
+    └── cluster2_name
+...
+```
+
 # Development
 
 ```bash

@@ -2,8 +2,13 @@ import json
 import os
 
 
+def read_file(filename):
+    with open(filename, 'rt') as fd:
+        return fd.read()
+
+
 def read_json(filename):
-    with open(filename, 'r') as fd:
+    with open(filename, 'rt') as fd:
         data = json.load(fd)
     return data
 
