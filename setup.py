@@ -9,8 +9,9 @@ def read_file(filename):
 # see examples in https://docs.python.org/3/distutils/examples.html
 setup(
     name='flashprof',
-    version='0.0.3',
+    version='0.0.5',
     description='a tool that collects and visualizes TiFlash runtime infomation',
+    long_description=read_file('README.md'),
     long_description_content_type='text/markdown',
     author='dragonly',
     author_email='liyilongko@gmail.com',
