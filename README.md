@@ -21,9 +21,12 @@ flashprof
     │   │   ├── ip1.tiflash.log
     │   │   └── ip2.tiflash.log
     │   └── task_dag (parsed and combined task dag)
-    │       ├── ip1.tiflash.log.task_dag.json
-    │       ├── ip2.tiflash.log.task_dag.json
-    │       └── cluster.task_dag.json
+    │       ├── json
+    │       │   ├── ip1.tiflash.log.task_dag.json
+    │       │   ├── ip2.tiflash.log.task_dag.json
+    │       │   └── cluster.task_dag.json
+    │       ├── png (rendered png files)
+    │       └── svg (rendered svg files)
     └── cluster2_name
 ...
 ```
@@ -46,7 +49,10 @@ pip3 uninstall flashprof
 ```bash
 pip3 install build
 python3 -m build
-twine upload --repository testpypi dist/*
+twine check dist/*
+twine upload dist/*
+# upload to test.pypi.org for package publish related test
+# twine upload --repository testpypi dist/*
 ```
 
 ## Instructions
