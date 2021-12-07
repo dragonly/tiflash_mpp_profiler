@@ -1,4 +1,5 @@
 import json
+import logging
 from collections import defaultdict
 from typing import Any, Dict, List
 
@@ -201,6 +202,7 @@ def draw_input_streams():
     graph.render()
 
 
+# TODO: query tso should be fixed
 def draw_input_streams_timeline():
     data = read_json('/Users/dragonly/Downloads/test-input-streams(1).json')
     events = []
@@ -267,6 +269,7 @@ def _gen_counter_events(pid, tid, name, push, pull, self):
 
 
 if __name__ == '__main__':
+    # TODO: consider multiple query tso
     draw_tasks_dag(read_json('/Users/dragonly/Downloads/multi_machine_mpp_task_tracing.json'))
     # draw_input_streams()
     # draw_input_streams_timeline()
