@@ -41,6 +41,7 @@ def _gen_label(data: Dict, not_keys, join_char='\l'):
     return join_char.join(labels) + join_char
 
 
+# translate input json list [task1, task2] to {id1: task1} for better performance and code structure
 def _trans_list_to_id_map(l: List) -> Dict[int, Any]:
     ret = {}
     for i in l:
@@ -92,12 +93,16 @@ class InputStreamGraph:
 
 class TaskGraph:
     def __init__(self, task):
-        self._g = graphviz.Digraph(name='cluster_'+str(task['task_id']), comment='task')
-        self._g.attr(label=_gen_label_executor_task(task), labeljust='l', labelloc='b', style='solid', color='black')
         self._task = task
         self._executors = _trans_list_to_id_map(task['executors'])
         self._task_id = task['task_id']
         self._receiver_sources: Dict[int, List[int]] = {}
+        self._g = graphviz.Digraph(name='cluster_'+str(task['task_id']), comment='task')
+        if self._task['status'] == 'FINISHED' and self._task['error_message'] == '':
+            self._g.attr(label=_gen_label_executor_task(task), labeljust='l', labelloc='b', style='solid')
+        else:
+            self._g.attr(label=_gen_label_executor_task(task), labeljust='l',
+                         labelloc='b', style='solid', color='red', penwidth='3')
 
     @property
     def g(self):
@@ -159,7 +164,7 @@ class Graph:
     def _draw_stages(self):
         for sender_executor_id, task_graphs in self._stages.items():
             stage_g = graphviz.Digraph(name='cluster_{}'.format(sender_executor_id), comment='stage')
-            stage_g.attr(label='stage', labeljust='c', labelloc='b', style='dashed', rank='same', color='green')
+            stage_g.attr(label='stage', labeljust='c', labelloc='b', style='dashed', rank='same')
             for task_graph in task_graphs:
                 stage_g.subgraph(task_graph.g)
             self._g.subgraph(stage_g)
