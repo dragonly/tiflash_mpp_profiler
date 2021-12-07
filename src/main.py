@@ -1,10 +1,11 @@
 import argparse
-from enum import Enum
 import json
 import logging
 import os
 import re
 import sys
+from collections import defaultdict
+from enum import Enum
 from os.path import expanduser
 
 import paramiko
@@ -115,18 +116,63 @@ def parse(parser, args):
         _parse_cluster_log(args.cluster)
 
 
-def _render_file(json_path, out_dir, type, format):
+def _render_files(json_path, out_dir, type, format):
+    '''
+    The original json may contain multiple distinct query tso, so we need to split it into multiple input
+    with a single tso in each.
+    The number of output file(s) is equal to distinct(query_tso) in the original json file.
+    '''
     json_data = utils.read_json(json_path)
-    out_path = os.path.join(out_dir, (os.path.basename(json_path)))
-    logging.debug('render type [{}], format [{}], from {} to {}'.format(type, format, json_path, out_path))
-    if type == RENDER_TYPE.TASK_DAG:
-        draw_tasks_dag(json_data, out_path, format)
-    else:
-        raise Exception('type {} is not supported yet'.format(type))
+
+    # split dataset according to query_tso
+    tso_partitioned = defaultdict(lambda: defaultdict(list))  # {tso: {task_id: [INITIALIZING, FINISHED/CANCELLED]}}
+    for data in json_data:
+        query_tso = data['query_tso']
+        task_id = data['task_id']
+        tso_partitioned[query_tso][task_id].append(data)
+
+    # only for debugging
+    for query_tso, data in tso_partitioned.items():
+        utils.ensure_dir_exist(os.path.join(out_dir, '.json_debug'))
+        with open(os.path.join(out_dir, '.json_debug', '{}.json'.format(query_tso)), 'wt') as fd:
+            json.dump(data, fd, indent=1)
+
+    # overwrite task with INITIALIZING status with CANCELLED/FINISHED
+    status_pruned = defaultdict(list)  # {tso: [list of tasks]}
+    for query_tso, tasks_map in tso_partitioned.items():
+        for task_id, tasks in tasks_map.items():
+            if len(tasks) == 1:  # only INITIALIZING
+                if tasks[0]['status'] != 'INITIALIZING':
+                    raise ValueError(
+                        'expect the only task has status INITIALIZING, tso [{}], task_id [{}]'.format(query_tso, task_id))
+                status_pruned[query_tso].append(tasks[0])
+            elif len(tasks) == 2:  # has INITIALIZING and FINISHED/CANCELLED
+                if tasks[0]['status'] == tasks[1]['status'] == 'INITIALIZING':
+                    raise ValueError(
+                        '2 tasks must not all have INITIALIZING status, tso [{}], task_id [{}]'.format(query_tso, task_id))
+                if tasks[0]['status'] != 'INITIALIZING' and tasks[0]['status'] != 'INITIALIZING':
+                    raise ValueError(
+                        'at least 1 task must have INITIALIZING status, tso [{}], task_id [{}]'.format(query_tso, task_id))
+                _task = tasks[0]
+                if _task['status'] == 'INITIALIZING':
+                    _task = tasks[1]
+                status_pruned[query_tso].append(_task)
+            else:
+                raise ValueError(
+                    'expect only 1 or 2 tasks with status, tso [{}], task_id [{}]'.format(query_tso, task_id))
+
+    # NOTE: we can parallelize this and utilize all the cpu cores to render
+    for query_tso, data in status_pruned.items():
+        logging.debug('query_tso [{}], count [{}]'.format(query_tso, len(data)))
+        out_path = os.path.join(out_dir, '{}.dot'.format(query_tso))
+        if type == RENDER_TYPE.TASK_DAG:
+            draw_tasks_dag(data, out_path, format)
+        else:
+            raise Exception('type {} is not supported yet'.format(type))
 
 
 def render_one(parser, args):
-    _render_file(args.json_file, args.out_dir, args.type, args.format)
+    _render_files(args.json_file, args.out_dir, args.type, args.format)
 
 
 def render_cluster(parser, args):
@@ -142,7 +188,7 @@ def render_cluster(parser, args):
         logging.debug('start rendering for {}'.format(cluster_dir))
         json_path = os.path.join(cluster_dir, 'task_dag', 'json', 'cluster.json')
         out_dir = os.path.join(cluster_dir, 'task_dag', args.format)
-        _render_file(json_path, out_dir, RENDER_TYPE.TASK_DAG, args.format)
+        _render_files(json_path, out_dir, RENDER_TYPE.TASK_DAG, args.format)
 
 
 def default(parser, args):

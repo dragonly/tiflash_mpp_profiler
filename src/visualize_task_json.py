@@ -93,7 +93,7 @@ class InputStreamGraph:
 class TaskGraph:
     def __init__(self, task):
         self._g = graphviz.Digraph(name='cluster_'+str(task['task_id']), comment='task')
-        self._g.attr(label=_gen_label_executor_task(task), labeljust='l', labelloc='b', style='solid')
+        self._g.attr(label=_gen_label_executor_task(task), labeljust='l', labelloc='b', style='solid', color='black')
         self._task = task
         self._executors = _trans_list_to_id_map(task['executors'])
         self._task_id = task['task_id']
@@ -138,7 +138,7 @@ class TaskGraph:
     def _draw_executor_edges(self):
         for eid, e in self._executors.items():
             for child_id in e['children']:
-                self._g.edge(self.get_node_id(child_id), self.get_node_id(eid))
+                self._g.edge(self.get_node_id(child_id), self.get_node_id(eid), weight='0')
 
     def get_node_id(self, node_id):
         return '{}-{}'.format(self._task_id, node_id)
@@ -159,7 +159,7 @@ class Graph:
     def _draw_stages(self):
         for sender_executor_id, task_graphs in self._stages.items():
             stage_g = graphviz.Digraph(name='cluster_{}'.format(sender_executor_id), comment='stage')
-            stage_g.attr(label='stage', labeljust='c', labelloc='b', style='dashed')
+            stage_g.attr(label='stage', labeljust='c', labelloc='b', style='dashed', rank='same', color='green')
             for task_graph in task_graphs:
                 stage_g.subgraph(task_graph.g)
             self._g.subgraph(stage_g)
@@ -173,7 +173,7 @@ class Graph:
                     sender_task_graph = self._task_graphs[sender_task_id]
                     sender_executor_id = sender_task_graph.sender_executor_id
                     sender_node_id = sender_task_graph.get_node_id(sender_executor_id)
-                    self._g.edge(sender_node_id, receiver_node_id, color='red')
+                    self._g.edge(sender_node_id, receiver_node_id, color='red', style='dashed')
 
     def render(self, filename, format):
         self._draw_stages()
