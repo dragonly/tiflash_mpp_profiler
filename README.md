@@ -58,3 +58,12 @@ twine upload dist/*
 ## Instructions
 
 Please refer to https://packaging.python.org/guides/distributing-packages-using-setuptools/ for detaild instructions.
+
+
+## Internals
+
+`collect` command collects tiflash logs according to the tiup configurations for the specified `--cluster $CLUSTER_NAME`, and logs are named `$IP.tiflash.log` in `flashprof/cluster/$CLUSTER_NAME/log`.
+
+`parse` command parses all the tiflash logs collected above to the json format, which only contains task DAGs for now. The json files a then merged into a `cluster.json` in `flashprof/cluster/$CLUSTER_NAME/task_dag/json`.
+
+`render` command renders `cluster.json` into dag graphs per `query_tso` in `flashprof/cluster/$CLUSTER_NAME/$FORMAT`.
