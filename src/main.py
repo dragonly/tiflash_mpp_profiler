@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import re
+import shutil
 import sys
 from collections import defaultdict
 from enum import Enum
@@ -72,6 +73,12 @@ def _parse_log_to_file(log_dir, task_dag_json_dir):
             json.dump(ret, fd, indent=1)
 
 
+def _clean_cluster(cluster_name):
+    cluster_dir = os.path.join(FLASHPROF_CLUSTER_DIR, cluster_name)
+    if os.path.exists(cluster_dir):
+        shutil.rmtree(cluster_dir)
+
+
 def _combine_json_files(json_dir, except_list):
     # TODO: potential optimization, make this stream-ish to reduce memory consumption
     combined = []
@@ -97,6 +104,7 @@ def _parse_cluster_log(cluster_name):
 
 
 def collect(parser, args):
+    _clean_cluster(args.cluster)
     username, ssh_key_file, tiflash_servers = _get_tiup_config(args.cluster)
     log_dir = os.path.join(FLASHPROF_CLUSTER_DIR, args.cluster, 'log')
     task_dag_json_dir = os.path.join(FLASHPROF_CLUSTER_DIR, args.cluster, 'task_dag', 'json')
