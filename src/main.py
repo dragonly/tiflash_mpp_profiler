@@ -72,10 +72,12 @@ def _parse_log_to_file(log_dir, task_dag_json_dir):
             json.dump(ret, fd, indent=1)
 
 
-def _combine_json_files(json_dir):
+def _combine_json_files(json_dir, except_list):
     # TODO: potential optimization, make this stream-ish to reduce memory consumption
     combined = []
     for filename in os.listdir(json_dir):
+        if filename in except_list:
+            continue
         data = utils.read_file(os.path.join(json_dir, filename))
         # this must success, because it should dumped with this same script
         parsed = json.loads(data)
@@ -89,8 +91,9 @@ def _parse_cluster_log(cluster_name):
     task_dag_json_dir = os.path.join(FLASHPROF_CLUSTER_DIR, cluster_name, 'task_dag', 'json')
     utils.ensure_dir_exist(log_dir)
     utils.ensure_dir_exist(task_dag_json_dir)
+    logging.info('parse logs in {}'.format(log_dir))
     _parse_log_to_file(log_dir, task_dag_json_dir)
-    _combine_json_files(task_dag_json_dir)
+    _combine_json_files(task_dag_json_dir, ['cluster.json'])
 
 
 def collect(parser, args):
@@ -101,7 +104,7 @@ def collect(parser, args):
     utils.ensure_dir_exist(task_dag_json_dir)
     for server in tiflash_servers:
         _copy_log_file(server['host'], server['ssh_port'], username, ssh_key_file, server['log_dir'], args.cluster)
-        _parse_cluster_log(args.cluster)
+    _parse_cluster_log(args.cluster)
 
 
 def parse(parser, args):
@@ -159,12 +162,13 @@ def _render_files(json_path, out_dir, type, format):
                 status_pruned[query_tso].append(_task)
             else:
                 raise ValueError(
-                    'expect only 1 or 2 tasks with status, tso [{}], task_id [{}]'.format(query_tso, task_id))
+                    'expect only 1 or 2 tasks with status, got [{}], tso [{}], task_id [{}]'.format(len(tasks), query_tso, task_id))
 
     # NOTE: we can parallelize this and utilize all the cpu cores to render
     for query_tso, data in status_pruned.items():
         logging.debug('query_tso [{}], count [{}]'.format(query_tso, len(data)))
         out_path = os.path.join(out_dir, '{}.dot'.format(query_tso))
+        logging.info('rendering query_tso [{}]'.format(query_tso))
         if type == RENDER_TYPE.TASK_DAG:
             draw_tasks_dag(data, out_path, format)
         else:
@@ -197,7 +201,8 @@ def default(parser, args):
 
 def cli():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--log', type=str, default='info')
+    parser.add_argument('--log', type=str, default='info',
+                        help='log level, use debug for more detailed logs, default to info')
     parser.set_defaults(func=default)
 
     subparsers = parser.add_subparsers()
@@ -207,14 +212,14 @@ def cli():
     parser_collect.add_argument('--cluster', type=str, required=True)
     parser_collect.set_defaults(func=collect)
 
-    parser_parse = subparsers.add_parser('parse', help='default to parse all clusters\' logs, mainly for debugging')
-    parser_parse.add_argument('--cluster', type=str)
-    parser_parse.set_defaults(func=parse)
-
     parser_render = subparsers.add_parser('render', help='render task dag files into graphic format')
     parser_render.add_argument('--cluster', type=str)
     parser_render.add_argument('--format', type=str, default='png')
     parser_render.set_defaults(func=render_cluster)
+
+    parser_parse = subparsers.add_parser('parse', help='default to parse all clusters\' logs, mainly for debugging')
+    parser_parse.add_argument('--cluster', type=str)
+    parser_parse.set_defaults(func=parse)
 
     parser_render_one = subparsers.add_parser('render_one', help='render one file, mainly for debugging')
     parser_render_one.add_argument('--json_file', type=str, required=True)
