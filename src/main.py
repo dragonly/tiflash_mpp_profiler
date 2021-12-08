@@ -44,11 +44,22 @@ def _copy_log_file(host, port, username, ssh_key_file, remote_log_dir, cluster_n
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     ssh.connect(host, port, username, key_filename=ssh_key_file)
-    sftp = ssh.open_sftp()
+    # sftp = ssh.open_sftp()
     remote_log_filename = os.path.join(remote_log_dir, 'tiflash.log')
     local_log_filename = os.path.join(FLASHPROF_CLUSTER_DIR, cluster_name, 'log', '{}.tiflash.log'.format(host))
-    logging.info('scp {}@{}:{}/{} {}'.format(username, host, port, remote_log_filename, local_log_filename))
-    sftp.get(remote_log_filename, local_log_filename)
+    # remote_log_filename = '/mnt/pingcap/tiflash_mpp_profiler/log/172.16.5.59.tiflash.log'
+    command = r'grep -P "\[\"MPPTask:<query:\d+,task:\d+> mpp_task_tracing" {}'.format(remote_log_filename)
+    logging.debug('executing ssh command: {}'.format(command))
+    stdin, stdout, stderr = ssh.exec_command(command)
+    logging.info('grep & scp {}@{}:{}/{} {}'.format(username, host, port, remote_log_filename, local_log_filename))
+    # sftp.get(remote_log_filename, local_log_filename)
+    with open(local_log_filename, 'wb') as fd:
+        fd.write(stdout.read())
+    err = stderr.read()
+    if len(err) != 0:
+        logging.error('error occurs: {}'.format(err))
+    else:
+        logging.info('success')
 
 
 def _parse_log_to_file(log_dir, task_dag_json_dir):
@@ -64,7 +75,7 @@ def _parse_log_to_file(log_dir, task_dag_json_dir):
                 try:
                     data = json.loads(json_str)
                 except Exception as e:
-                    logging.error(e)
+                    logging.error('failed to load json: {}\n{}'.format(e, json_str))
                     continue
                 ret.append(data)
         output_filename = os.path.join(task_dag_json_dir, log_filename + '.task_dag.json')
