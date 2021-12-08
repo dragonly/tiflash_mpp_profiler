@@ -171,10 +171,14 @@ class Graph:
 
     # draw executor references corssing task boundaries
     def _draw_task_references(self):
-        for _, receiver_task_graph in self._task_graphs.items():
+        for receiver_task_id, receiver_task_graph in self._task_graphs.items():
             for receiver_executor_id, sender_task_ids in receiver_task_graph.receiver_sources.items():
                 receiver_node_id = receiver_task_graph.get_node_id(receiver_executor_id)
                 for sender_task_id in sender_task_ids:
+                    if sender_task_id not in self._task_graphs:
+                        logging.error('failed to get source task with task_id [{}] for receiver task [{}]'.format(
+                            sender_task_id, receiver_task_id))
+                        continue
                     sender_task_graph = self._task_graphs[sender_task_id]
                     sender_executor_id = sender_task_graph.sender_executor_id
                     sender_node_id = sender_task_graph.get_node_id(sender_executor_id)
