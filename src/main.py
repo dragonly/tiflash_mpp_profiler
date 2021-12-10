@@ -233,7 +233,7 @@ def cli():
 
     parser_render = subparsers.add_parser('render', help='render task dag files into graphic format')
     parser_render.add_argument('--cluster', type=str)
-    parser_render.add_argument('--format', type=str, default='png')
+    parser_render.add_argument('--format', type=str, default='svg')
     parser_render.set_defaults(func=render_cluster)
 
     parser_parse = subparsers.add_parser('parse', help='default to parse all clusters\' logs, mainly for debugging')
@@ -244,7 +244,7 @@ def cli():
     parser_render_one.add_argument('--json_file', type=str, required=True)
     parser_render_one.add_argument('--out_dir', type=str, required=True)
     parser_render_one.add_argument('--type', type=RENDER_TYPE, default=RENDER_TYPE.TASK_DAG, choices=list(RENDER_TYPE))
-    parser_render_one.add_argument('--format', type=str, default='png')
+    parser_render_one.add_argument('--format', type=str, default='svg')
     parser_render_one.set_defaults(func=render_one)
 
     args = parser.parse_args(sys.argv[1:])

@@ -5,9 +5,18 @@
 pip3 install flashprof
 # collect tiflash logs from tiup cluster to current directory, which will also be parsed to json
 flashprof collect --cluster $CLUSTER_NAME
-# draw dag using parsed json file, support task/input_stream DAG
-flashprof draw --json_file $JSON_FILE --out_dir $OUT_DIR --type $DAG_TYPE
+# render all cluster runtime info, currently supports task DAG
+flashprof render
+# help
+flashprof -h
+flashprof <subcommand> -h
 ```
+
+## DAG
+
+Currently only task runtime info is visualized as DAG. Tasks in a single query may span across several tiflash instances, and those with `status != FINISHED` or `error_message != ""` will be labelled with red border.
+<img src="images/429597109625815041.dot.png" style="max-width:540px"/>
+
 
 ## data layout
 
