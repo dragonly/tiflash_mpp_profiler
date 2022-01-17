@@ -64,25 +64,27 @@ def _copy_log_file(host, port, username, ssh_key_file, remote_log_dir, cluster_n
 
 def _parse_log_to_file(log_dir, task_dag_json_dir):
     for log_filename in os.listdir(log_dir):
-        ret = []
         logging.info('parsing {}'.format(log_filename))
-        with open(os.path.join(log_dir, log_filename), 'r') as fd:
-            for line in fd:
-                match = re.search(r'\["mpp_task_tracing:<query:\d+,task:\d+> (\{.+\})', line)
-                if match is None:
-                    continue
-                json_str = match.group(1).replace('\\', '')
-                try:
-                    data = json.loads(json_str)
-                except Exception as e:
-                    logging.error('failed to load json: {}\n{}'.format(e, json_str))
-                    continue
-                ret.append(data)
-        output_filename = os.path.join(task_dag_json_dir, log_filename + '.task_dag.json')
-        logging.info('write to {}'.format(output_filename))
-        with open(output_filename, 'wt') as fd:
-            json.dump(ret, fd, indent=1)
+        _parse_one_log_to_file(os.path.join(log_dir, log_filename), task_dag_json_dir)
 
+def _parse_one_log_to_file(log_file, task_dag_json_dir):
+    ret = []
+    with open(log_file, 'r') as fd:
+        for line in fd:
+            match = re.search(r'\["mpp_task_tracing:<query:\d+,task:\d+> (\{.+\})', line)
+            if match is None:
+                continue
+            json_str = match.group(1).replace('\\', '')
+            try:
+                data = json.loads(json_str)
+            except Exception as e:
+                logging.error('failed to load json: {}\n{}'.format(e, json_str))
+                continue
+            ret.append(data)
+    output_filename = os.path.join(task_dag_json_dir, os.path.basename(log_file) + '.task_dag.json')
+    logging.info('write to {}'.format(output_filename))
+    with open(output_filename, 'wt') as fd:
+        json.dump(ret, fd, indent=1)
 
 def _clean_cluster(cluster_name):
     cluster_dir = os.path.join(FLASHPROF_CLUSTER_DIR, cluster_name)
@@ -137,6 +139,12 @@ def parse(parser, args):
             raise FileNotFoundError('cannot find cluster dir for {}, should be {}'.format(args.cluster, cluster_dir))
         _parse_cluster_log(args.cluster)
 
+def _parse_files(log_path, out_dir):
+    utils.ensure_dir_exist(out_dir)
+    _parse_one_log_to_file(log_path, out_dir)
+
+def parse_one(parser, args):
+    _parse_files(args.log_file, args.out_dir)
 
 def _render_files(json_path, out_dir, type, format):
     '''
@@ -239,6 +247,11 @@ def cli():
     parser_parse = subparsers.add_parser('parse', help='default to parse all clusters\' logs, mainly for debugging')
     parser_parse.add_argument('--cluster', type=str)
     parser_parse.set_defaults(func=parse)
+
+    parser_parse_one = subparsers.add_parser('parse_one', help='parse one file, mainly for debugging')
+    parser_parse_one.add_argument('--log_file', type=str, required=True)
+    parser_parse_one.add_argument('--out_dir', type=str, required=True)
+    parser_parse_one.set_defaults(func=parse_one)
 
     parser_render_one = subparsers.add_parser('render_one', help='render one file, mainly for debugging')
     parser_render_one.add_argument('--json_file', type=str, required=True)
