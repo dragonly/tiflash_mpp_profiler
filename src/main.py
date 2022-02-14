@@ -40,7 +40,7 @@ def _get_tiup_config(cluster_name):
     return username, ssh_key_file, tiflash_servers
 
 
-def _copy_log_file(host, port, username, ssh_key_file, remote_log_dir, cluster_name):
+def _copy_log_file(host, port, username, ssh_key_file, remote_log_dir, cluster_name, tso):
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     ssh.connect(host, port, username, key_filename=ssh_key_file)
@@ -48,7 +48,8 @@ def _copy_log_file(host, port, username, ssh_key_file, remote_log_dir, cluster_n
     remote_log_filename = os.path.join(remote_log_dir, 'tiflash.log')
     local_log_filename = os.path.join(FLASHPROF_CLUSTER_DIR, cluster_name, 'log', '{}.tiflash.log'.format(host))
     # remote_log_filename = '/mnt/pingcap/tiflash_mpp_profiler/log/172.16.5.59.tiflash.log'
-    command = r'grep -P "\[\"mpp_task_tracing:<query:\d+,task:\d+>" {}'.format(remote_log_filename)
+    command = r'grep -P "\[\"mpp_task_tracing:<query:\d+,task:\d+>" {}'.format(remote_log_filename) if tso is None \
+        else r'grep -P "\[\"mpp_task_tracing:<query:{},task:\d+>" {}'.format(tso, remote_log_filename)
     logging.debug('executing ssh command: {}'.format(command))
     stdin, stdout, stderr = ssh.exec_command(command)
     logging.info('grep & scp {}@{}:{}/{} {}'.format(username, host, port, remote_log_filename, local_log_filename))
@@ -124,7 +125,8 @@ def collect(parser, args):
     utils.ensure_dir_exist(log_dir)
     utils.ensure_dir_exist(task_dag_json_dir)
     for server in tiflash_servers:
-        _copy_log_file(server['host'], server['ssh_port'], username, ssh_key_file, server['log_dir'], args.cluster)
+        _copy_log_file(server['host'], server['ssh_port'], username,
+                       ssh_key_file, server['log_dir'], args.cluster, args.tso)
     _parse_cluster_log(args.cluster)
 
 
@@ -237,6 +239,7 @@ def cli():
     parser_collect = subparsers.add_parser(
         'collect', help='try to use tiup configuration in this machine for the cluster specified in args')
     parser_collect.add_argument('--cluster', type=str, required=True)
+    parser_collect.add_argument('--tso', type=str)
     parser_collect.set_defaults(func=collect)
 
     parser_render = subparsers.add_parser('render', help='render task dag files into graphic format')
