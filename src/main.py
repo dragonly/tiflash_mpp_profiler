@@ -182,7 +182,7 @@ def _render_files(json_path, out_dir, type, format):
                 if tasks[0]['status'] == tasks[1]['status'] == 'INITIALIZING':
                     raise ValueError(
                         '2 tasks must not all have INITIALIZING status, tso [{}], task_id [{}]'.format(query_tso, task_id))
-                if tasks[0]['status'] != 'INITIALIZING' and tasks[0]['status'] != 'INITIALIZING':
+                if tasks[0]['status'] != 'INITIALIZING' and tasks[1]['status'] != 'INITIALIZING':
                     raise ValueError(
                         'at least 1 task must have INITIALIZING status, tso [{}], task_id [{}]'.format(query_tso, task_id))
                 _task = tasks[0]
