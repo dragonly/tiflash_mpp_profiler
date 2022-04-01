@@ -175,23 +175,23 @@ def _render_files(json_path, out_dir, type, format):
         for task_id, tasks in tasks_map.items():
             if len(tasks) == 1:  # only INITIALIZING
                 if tasks[0]['status'] != 'INITIALIZING':
-                    raise ValueError(
-                        'expect the only task has status INITIALIZING, tso [{}], task_id [{}]'.format(query_tso, task_id))
+                    logging.error('expect the only task has status INITIALIZING, tso [{}], task_id [{}]'.format(query_tso, task_id))
+                    continue
                 status_pruned[query_tso].append(tasks[0])
             elif len(tasks) == 2:  # has INITIALIZING and FINISHED/CANCELLED
                 if tasks[0]['status'] == tasks[1]['status'] == 'INITIALIZING':
-                    raise ValueError(
-                        '2 tasks must not all have INITIALIZING status, tso [{}], task_id [{}]'.format(query_tso, task_id))
+                    logging.error('2 tasks must not all have INITIALIZING status, tso [{}], task_id [{}]'.format(query_tso, task_id))
+                    continue
                 if tasks[0]['status'] != 'INITIALIZING' and tasks[1]['status'] != 'INITIALIZING':
-                    raise ValueError(
-                        'at least 1 task must have INITIALIZING status, tso [{}], task_id [{}]'.format(query_tso, task_id))
+                    logging.error('at least 1 task must have INITIALIZING status, tso [{}], task_id [{}]'.format(query_tso, task_id))
+                    continue
                 _task = tasks[0]
                 if _task['status'] == 'INITIALIZING':
                     _task = tasks[1]
                 status_pruned[query_tso].append(_task)
             else:
-                raise ValueError(
-                    'expect only 1 or 2 tasks with status, got [{}], tso [{}], task_id [{}]'.format(len(tasks), query_tso, task_id))
+                logging.error('expect only 1 or 2 tasks with status, got [{}], tso [{}], task_id [{}]'.format(len(tasks), query_tso, task_id))
+                continue
 
     # NOTE: we can parallelize this and utilize all the cpu cores to render
     for query_tso, data in status_pruned.items():
