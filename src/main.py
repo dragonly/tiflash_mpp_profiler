@@ -48,8 +48,8 @@ def _copy_log_file(host, port, username, ssh_key_file, remote_log_dir, cluster_n
     remote_log_filename = os.path.join(remote_log_dir, 'tiflash.log')
     local_log_filename = os.path.join(FLASHPROF_CLUSTER_DIR, cluster_name, 'log', '{}.tiflash.log'.format(host))
     # remote_log_filename = '/mnt/pingcap/tiflash_mpp_profiler/log/172.16.5.59.tiflash.log'
-    command = r'grep -P "\[\"mpp_task_tracing:<query:\d+,task:\d+>" {}'.format(remote_log_filename) if tso is None \
-        else r'grep -P "\[\"mpp_task_tracing:<query:{},task:\d+>" {}'.format(tso, remote_log_filename)
+    command = r'grep -P "\[\"mpp_task_tracing:[a-zA-Z]*<query:\d+,task:\d+>" {}'.format(remote_log_filename) if tso is None \
+        else r'grep -P "\[\"mpp_task_tracing:[a-zA-Z]*<query:\d+,task:\d+>" {}'.format(tso, remote_log_filename)
     logging.debug('executing ssh command: {}'.format(command))
     stdin, stdout, stderr = ssh.exec_command(command)
     logging.info('grep & scp {}@{}:{}/{} {}'.format(username, host, port, remote_log_filename, local_log_filename))
@@ -72,7 +72,7 @@ def _parse_one_log_to_file(log_file, task_dag_json_dir):
     ret = []
     with open(log_file, 'r') as fd:
         for line in fd:
-            match = re.search(r'\["mpp_task_tracing:<query:\d+,task:\d+> (\{.+\})', line)
+            match = re.search(r'\["mpp_task_tracing:[a-zA-Z]*<query:\d+,task:\d+> (\{.+\})', line)
             if match is None:
                 continue
             json_str = match.group(1).replace('\\', '')
