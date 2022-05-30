@@ -49,7 +49,7 @@ def _copy_log_file(host, port, username, ssh_key_file, remote_log_dir, cluster_n
     local_log_filename = os.path.join(FLASHPROF_CLUSTER_DIR, cluster_name, 'log', '{}.tiflash.log'.format(host))
     # remote_log_filename = '/mnt/pingcap/tiflash_mpp_profiler/log/172.16.5.59.tiflash.log'
     command = r'grep -P "\[\"mpp_task_tracing:[a-zA-Z]*<query:\d+,task:\d+>" {}'.format(remote_log_filename) if tso is None \
-        else r'grep -P "\[\"mpp_task_tracing:[a-zA-Z]*<query:\d+,task:\d+>" {}'.format(tso, remote_log_filename)
+        else r'grep -P "\[\"mpp_task_tracing:[a-zA-Z]*<query:{},task:\d+>" {}'.format(tso, remote_log_filename)
     logging.debug('executing ssh command: {}'.format(command))
     stdin, stdout, stderr = ssh.exec_command(command)
     logging.info('grep & scp {}@{}:{}/{} {}'.format(username, host, port, remote_log_filename, local_log_filename))
